@@ -27,6 +27,10 @@ def write_entry(path: str) -> None:
         os.fsync(f.fileno())
 
 
+# Why verification is this strict: the competition gate accepts only the
+# entrant's own handle as a single token of 1-30 characters, so this program
+# refuses to pass silently on any drift — wrong length, stray whitespace, or
+# a trailing newline all fail loudly here instead of at the gate.
 def verify_entry(path: str) -> None:
     with open(path, "rb") as f:
         raw = f.read()
@@ -38,6 +42,13 @@ def verify_entry(path: str) -> None:
 
     # Must be valid UTF-8 text.
     text = raw.decode("utf-8")
+
+    # Exact character count: this handle is exactly 12 characters, and the
+    # read-back must match that count precisely, not merely fall in range.
+    if len(text) != 12:
+        raise ValueError(
+            f"handle character count is {len(text)}, expected exactly 12"
+        )
 
     # Length gate: 1-30 characters.
     if not (MIN_CHARS <= len(text) <= MAX_CHARS):
